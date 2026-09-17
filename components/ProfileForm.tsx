@@ -78,7 +78,9 @@ export default function ProfileForm({ initialName, initialImage, email }: Props)
         return;
       }
       if (passwordWasChanged) {
-        await signOut({ callbackUrl: "/login" });
+        await signOut({ redirect: false });
+        router.replace("/login");
+        router.refresh();
         return;
       }
       setMessage("Profile saved.");
