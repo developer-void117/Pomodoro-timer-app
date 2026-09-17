@@ -45,6 +45,15 @@ export async function PATCH(request: Request) {
 export async function DELETE() {
   const session = await auth();
   if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  await prisma.user.delete({ where: { email: session.user.email } });
+  const email = session.user.email;
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  await prisma.$transaction([
+    prisma.workSession.deleteMany({ where: { userId: user.id } }),
+    prisma.passwordReset.deleteMany({ where: { email } }),
+    prisma.user.delete({ where: { id: user.id } }),
+  ]);
+  revalidateTag(`dashboard-${email}`);
+  revalidateTag(`profile-${email}`);
   return NextResponse.json({ ok: true });
 }

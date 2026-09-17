@@ -10,6 +10,9 @@ export default function LoginPage() {
         <h1 className="mt-10 text-3xl font-bold tracking-tight">Welcome back</h1>
         <p className="mt-2 text-slate-600">Sign in and make space for your best work.</p>
         <AuthForm mode="login" />
+        <Link className="mt-4 block text-center text-sm font-semibold text-moss" href="/forgot-password">
+          Forgot Password?
+        </Link>
         <p className="mt-6 text-center text-sm text-slate-600">
           New here?{" "}
           <Link className="font-semibold text-moss" href="/register">
