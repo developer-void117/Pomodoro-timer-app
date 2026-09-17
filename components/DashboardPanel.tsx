@@ -4,12 +4,14 @@ import FocusTimer from "./FocusTimer";
 import ProgressChart from "./ProgressChart";
 
 const reminderQuotes = [
-  "One focused block is enough to change the shape of your day.",
-  "Small steps done consistently create real momentum.",
-  "Your next session is the easiest version of your future self.",
   "Focus on what matters now, not the whole week at once.",
+  "Small steps, done consistently, create real momentum.",
+  "Your next session is the easiest version of your future self.",
   "A calm start often creates the strongest finish.",
+  "One focused block is enough to change the shape of your day.",
 ];
+
+const reminderIntervalMs = 2 * 60 * 1000;
 
 function displayDuration(seconds: number) { const minutes = Math.floor(seconds / 60); const remainder = seconds % 60; return minutes ? `${minutes}m ${remainder}s` : `${remainder}s`; }
 
@@ -26,8 +28,8 @@ export default function DashboardPanel({ initialTodaySeconds, initialWeekSeconds
       window.setTimeout(() => {
         setQuoteIndex((current) => (current + 1) % reminderQuotes.length);
         setIsFading(false);
-      }, 180);
-    }, 3500);
+      }, 220);
+    }, reminderIntervalMs);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -61,14 +63,22 @@ export default function DashboardPanel({ initialTodaySeconds, initialWeekSeconds
         </section>
         <ProgressChart data={chartValues} />
         <section className="card p-6">
-          <h2 className="font-bold">A tiny reminder</h2>
-          <div className="relative mt-3 min-h-[72px] overflow-hidden">
+          <h2 className="font-bold text-slate-800">A tiny reminder</h2>
+          <div className="relative mt-4 min-h-[82px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
             <p
               key={quoteIndex}
-              className={`text-sm leading-6 text-slate-600 transition-all duration-300 ease-out ${isFading ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}
+              className={`text-base leading-7 text-slate-700 transition-all duration-500 ease-out ${isFading ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"}`}
             >
               {reminderQuotes[quoteIndex]}
             </p>
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            {reminderQuotes.map((_, index) => (
+              <span
+                key={index}
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${index === quoteIndex ? "bg-moss scale-110" : "bg-slate-300"}`}
+              />
+            ))}
           </div>
         </section>
       </div>
