@@ -9,6 +9,7 @@ class EmailNotRegisteredError extends CredentialsSignin {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt" },
   providers: [
     Credentials({
