@@ -4,11 +4,20 @@ type Mode = "pomodoro" | "timer";
 const POMODORO_SECONDS = 25 * 60;
 const format = (n: number) =>
   `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
-export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number) => void }) {
+const formatDuration = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  if (minutes && remainder) return `${minutes}m ${remainder}s`;
+  if (minutes) return `${minutes}m`;
+  return `${remainder}s`;
+};
+export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number, savedAt?: Date) => void }) {
   const [mode, setMode] = useState<Mode>("pomodoro"),
     [seconds, setSeconds] = useState(POMODORO_SECONDS),
     [running, setRunning] = useState(false),
-    [saved, setSaved] = useState(false);
+    [manualMinutes, setManualMinutes] = useState(0),
+    [manualSeconds, setManualSeconds] = useState(0),
+    [statusMessage, setStatusMessage] = useState("");
   const startAt = useRef<Date | null>(null),
     segmentStartSeconds = useRef(POMODORO_SECONDS),
     modeRef = useRef<Mode>("pomodoro");
@@ -35,14 +44,44 @@ export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number) =>
     setMode(next);
     setSeconds(next === "pomodoro" ? POMODORO_SECONDS : 0);
     segmentStartSeconds.current = next === "pomodoro" ? POMODORO_SECONDS : 0;
-    setSaved(false);
+    setStatusMessage("");
+  }
+  async function addManualTime() {
+    const totalSeconds = manualMinutes * 60 + manualSeconds;
+    if (totalSeconds <= 0) {
+      setStatusMessage("Choose at least 1 second to add.");
+      return;
+    }
+    const now = new Date();
+    try {
+      const response = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "TIMER",
+          durationSeconds: totalSeconds,
+          startedAt: now,
+          endedAt: now,
+        }),
+      });
+      if (!response.ok) {
+        setStatusMessage("Unable to add time. Please try again.");
+        return;
+      }
+      onSaved?.(totalSeconds, now);
+      setManualMinutes(0);
+      setManualSeconds(0);
+      setStatusMessage(`Added ${formatDuration(totalSeconds)} to your focus total.`);
+    } catch {
+      setStatusMessage("Unable to add time. Please try again.");
+    }
   }
   async function toggle() {
     if (!running) {
       startAt.current = new Date();
       segmentStartSeconds.current = seconds;
       setRunning(true);
-      setSaved(false);
+      setStatusMessage("");
       return;
     }
     setRunning(false);
@@ -59,8 +98,8 @@ export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number) =>
         }),
       });
       if (response.ok) {
-        onSaved?.(worked);
-        setSaved(true);
+        onSaved?.(worked, startAt.current ?? new Date());
+        setStatusMessage("Your focus time was saved.");
       }
     }
   }
@@ -68,7 +107,7 @@ export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number) =>
     setRunning(false);
     setSeconds(mode === "pomodoro" ? POMODORO_SECONDS : 0);
     segmentStartSeconds.current = mode === "pomodoro" ? POMODORO_SECONDS : 0;
-    setSaved(false);
+    setStatusMessage("");
   }
   const displayed = mode === "pomodoro" ? seconds : seconds;
   const progress =
@@ -117,7 +156,55 @@ export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number) =>
           {running ? "Stop & save" : "Start focus"}
         </button>
       </div>
-      {saved && <p className="mt-4 text-center text-sm font-medium text-moss">Your focus time was saved.</p>}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="font-semibold text-slate-700">Add time</h3>
+          <span className="text-sm font-medium text-moss">{formatDuration(manualMinutes * 60 + manualSeconds)}</span>
+        </div>
+        <div className="mt-4">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[.18em] text-slate-500">
+            Minutes
+          </label>
+          <input
+            type="range"
+            min={0}
+            max={120}
+            value={manualMinutes}
+            onChange={(event) => setManualMinutes(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer accent-moss"
+          />
+          <div className="mt-1 flex justify-between text-xs text-slate-500">
+            <span>0m</span>
+            <span>{manualMinutes}m</span>
+            <span>120m</span>
+          </div>
+        </div>
+        <div className="mt-4">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[.18em] text-slate-500">
+            Seconds
+          </label>
+          <input
+            type="range"
+            min={0}
+            max={59}
+            value={manualSeconds}
+            onChange={(event) => setManualSeconds(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer accent-moss"
+          />
+          <div className="mt-1 flex justify-between text-xs text-slate-500">
+            <span>0s</span>
+            <span>{manualSeconds}s</span>
+            <span>59s</span>
+          </div>
+        </div>
+        <button
+          onClick={addManualTime}
+          className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-700"
+        >
+          Add
+        </button>
+      </div>
+      {statusMessage && <p className="mt-4 text-center text-sm font-medium text-moss">{statusMessage}</p>}
     </section>
   );
 }
