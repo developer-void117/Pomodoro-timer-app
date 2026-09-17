@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getAccountDeletionRedirect } from "../lib/account-delete";
 
 type Props = { initialName: string; initialImage: string | null; email: string };
 function Eye({ open }: { open: boolean }) {
@@ -93,9 +94,24 @@ export default function ProfileForm({ initialName, initialImage, email }: Props)
   }
   async function deleteAccount() {
     if (!confirm("Delete your account and all recorded focus sessions? This cannot be undone.")) return;
-    const response = await fetch("/api/profile", { method: "DELETE" });
-    if (response.ok) await signOut({ callbackUrl: "/" });
-    else setMessage("Unable to delete your account. Please try again.");
+
+    try {
+      const response = await fetch("/api/profile", { method: "DELETE" });
+      const result = response.headers.get("content-type")?.includes("application/json")
+        ? await response.json()
+        : null;
+
+      if (!response.ok) {
+        setMessage(result?.error || "Unable to delete your account. Please try again.");
+        return;
+      }
+
+      await signOut({ redirect: false });
+      router.replace(getAccountDeletionRedirect());
+      router.refresh();
+    } catch {
+      setMessage("Unable to delete your account. Please try again.");
+    }
   }
   const passwordInput = (
     label: string,
