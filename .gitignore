@@ -1,0 +1,13 @@
+# Local secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Dependencies and Next.js build files
+node_modules/
+.next/
+
+# Prisma local development files
+prisma/dev.db
+prisma/dev.db-journal
