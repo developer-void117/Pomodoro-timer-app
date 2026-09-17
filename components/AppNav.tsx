@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import SignOutButton from "./SignOutButton";
 
 function initials(name: string) {
@@ -14,6 +17,9 @@ function initials(name: string) {
 }
 
 export default function AppNav({ name, image }: { name: string; image: string | null }) {
+  const pathname = usePathname();
+  const isCalendar = pathname.startsWith("/calendar");
+
   return (
     <header className="border-b border-[#d8e6dd] bg-white/85 shadow-[0_1px_0_rgba(24,34,30,.03)] backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -21,6 +27,13 @@ export default function AppNav({ name, image }: { name: string; image: string | 
           focus<span className="text-moss">flow</span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-5">
+          <Link
+            href={isCalendar ? "/dashboard" : "/calendar"}
+            aria-label={isCalendar ? "Switch to dashboard" : "Switch to calendar"}
+            className="rounded-lg bg-[#f0f5f2] px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-mint hover:text-moss sm:hidden"
+          >
+            {isCalendar ? "Dashboard" : "Calendar"}
+          </Link>
           <div className="hidden rounded-xl bg-[#f0f5f2] p-1 sm:flex">
             <Link
               className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-moss hover:shadow-sm"

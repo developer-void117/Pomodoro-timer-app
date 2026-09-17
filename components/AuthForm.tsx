@@ -25,7 +25,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     }
     const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError(result.code === "EmailNotRegistered" ? "Email is not registered." : "Invalid password.");
       setLoading(false);
       return;
     }

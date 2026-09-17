@@ -1,7 +1,12 @@
 import NextAuth from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "./lib/prisma";
+
+class EmailNotRegisteredError extends CredentialsSignin {
+  code = "EmailNotRegistered";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -17,7 +22,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email },
           select: { id: true, email: true, name: true, passwordHash: true },
         });
-        if (!user || !(await compare(password, user.passwordHash))) return null;
+        if (!user) throw new EmailNotRegisteredError();
+        if (!(await compare(password, user.passwordHash))) return null;
         return { id: user.id, email: user.email, name: user.name };
       },
     }),
