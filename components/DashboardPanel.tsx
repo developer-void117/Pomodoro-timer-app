@@ -62,21 +62,21 @@ export default function DashboardPanel({ initialTodaySeconds, initialWeekSeconds
           </div>
         </section>
         <ProgressChart data={chartValues} />
-        <section className="card p-6">
-          <h2 className="font-bold text-slate-800">A tiny reminder</h2>
-          <div className="relative mt-4 min-h-[82px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+        <section className="rounded-[28px] border border-white/40 bg-white/35 p-6 shadow-[0_12px_32px_rgba(15,23,42,0.04)] backdrop-blur-xl">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800">A tiny reminder</h2>
+          <div className="relative mt-4 min-h-[90px] overflow-hidden">
             <p
               key={quoteIndex}
-              className={`text-base leading-7 text-slate-700 transition-all duration-500 ease-out ${isFading ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"}`}
+              className={`text-xl font-medium leading-8 text-slate-700 transition-all duration-500 ease-out ${isFading ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"}`}
             >
               {reminderQuotes[quoteIndex]}
             </p>
           </div>
-          <div className="mt-3 flex items-center justify-center gap-2">
+          <div className="mt-4 flex items-center justify-center gap-2">
             {reminderQuotes.map((_, index) => (
               <span
                 key={index}
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${index === quoteIndex ? "bg-moss scale-110" : "bg-slate-300"}`}
+                className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${index === quoteIndex ? "bg-moss scale-125" : "bg-slate-300/80"}`}
               />
             ))}
           </div>
