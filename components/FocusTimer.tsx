@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 type Mode = "pomodoro" | "timer";
 const POMODORO_SECONDS = 25 * 60;
+const TIMER_STORAGE_KEY = "focusflow-active-timer";
 const format = (n: number) =>
   `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
 const formatDuration = (seconds: number) => {
@@ -20,8 +21,46 @@ export default function FocusTimer({ onSaved }: { onSaved?: (seconds: number, sa
     [statusMessage, setStatusMessage] = useState("");
   const startAt = useRef<Date | null>(null),
     segmentStartSeconds = useRef(POMODORO_SECONDS),
-    modeRef = useRef<Mode>("pomodoro");
+    modeRef = useRef<Mode>("pomodoro"),
+    hydrated = useRef(false);
   modeRef.current = mode;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(TIMER_STORAGE_KEY) || "null") as {
+        mode?: Mode;
+        segmentStartSeconds?: number;
+        startedAt?: string;
+      } | null;
+      if (saved?.mode && typeof saved.segmentStartSeconds === "number" && saved.startedAt) {
+        const savedStart = new Date(saved.startedAt);
+        const elapsed = Math.floor((Date.now() - savedStart.getTime()) / 1000);
+        const nextSeconds = saved.mode === "pomodoro" ? Math.max(0, saved.segmentStartSeconds - elapsed) : saved.segmentStartSeconds + elapsed;
+        setMode(saved.mode);
+        setSeconds(nextSeconds);
+        segmentStartSeconds.current = saved.segmentStartSeconds;
+        startAt.current = savedStart;
+        setRunning(saved.mode === "timer" || nextSeconds > 0);
+      }
+    } catch {
+      window.localStorage.removeItem(TIMER_STORAGE_KEY);
+    }
+    hydrated.current = true;
+  }, []);
+  useEffect(() => {
+    if (!hydrated.current) return;
+    if (!running || !startAt.current) {
+      window.localStorage.removeItem(TIMER_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(
+      TIMER_STORAGE_KEY,
+      JSON.stringify({
+        mode,
+        segmentStartSeconds: segmentStartSeconds.current,
+        startedAt: startAt.current.toISOString(),
+      }),
+    );
+  }, [mode, running, seconds]);
   useEffect(() => {
     if (!running) return;
     const id = window.setInterval(
